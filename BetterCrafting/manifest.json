@@ -1,10 +1,10 @@
 ﻿{
    "Name": "BetterCrafting",
    "Author": "RedstoneBoy",
-   "Version": "1.0.0",
+   "Version": "1.0.1",
    "Description": "Better crafting gui.",
    "UniqueID": "RedstoneBoy.BetterCrafting",
    "EntryDll": "BetterCrafting.dll",
    "MinimumApiVersion": "2.0",
-   "UpdateKeys": []
+   "UpdateKeys": [ "GitHub:RedstoneBoy/BetterCrafting" ]
 }
