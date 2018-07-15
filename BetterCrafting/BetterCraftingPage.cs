@@ -712,8 +712,6 @@ namespace BetterCrafting
 
         public override void receiveRightClick(int x, int y, bool playSound = true)
         {
-            base.receiveRightClick(x, y, playSound);
-
             this.heldItem = this.inventory.rightClick(x, y, this.heldItem);
 
             foreach (var c in this.recipes[this.selectedCategory].Keys)
