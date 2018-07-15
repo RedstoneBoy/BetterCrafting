@@ -32,10 +32,14 @@ namespace BetterCrafting
         private Dictionary<ItemCategory, Dictionary<ClickableTextureComponent, CraftingRecipe>> recipes;
         private Dictionary<ClickableComponent, ItemCategory> categories;
 
+        private ClickableComponent[] selectables;
+
         private ItemCategory selectedCategory;
 
         private ClickableTextureComponent trashCan;
         private float trashCanLidRotation;
+
+        private ClickableComponent throwComp;
 
         private ClickableTextureComponent oldButton;
 
@@ -47,6 +51,11 @@ namespace BetterCrafting
         private Item hoverItem;
 
         private string categoryText;
+
+        private int maxItemsInRow;
+
+        private int snappedId = 0;
+        private int snappedSection = 1;
 
         public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData)
             : base(Game1.activeClickableMenu.xPositionOnScreen, Game1.activeClickableMenu.yPositionOnScreen, Game1.activeClickableMenu.width, Game1.activeClickableMenu.height)
@@ -73,6 +82,8 @@ namespace BetterCrafting
             var categorySpacing = Game1.tileSize / 6;
             var tabPad = Game1.tileSize + Game1.tileSize / 4;
 
+            int id = 0;
+
             foreach (ItemCategory category in this.categoryManager.GetItemCategories())
             {
                 this.recipes[category] = new Dictionary<ClickableTextureComponent, CraftingRecipe>();
@@ -90,10 +101,14 @@ namespace BetterCrafting
                 var c = new ClickableComponent(
                     new Rectangle((int) x, (int) y, (int) width, (int) height),
                     category.Equals(this.selectedCategory) ? UNAVAILABLE : AVAILABLE, catName);
+                c.myID = id;
+                c.upNeighborID = id - 1;
+                c.downNeighborID = id + 1;
 
                 this.categories.Add(c, category);
 
                 catIndex += 1;
+                id += 1;
             }
 
             this.trashCan = new ClickableTextureComponent(
@@ -104,6 +119,13 @@ namespace BetterCrafting
                 Game1.mouseCursors,
                 new Rectangle(669, 261, 16, 26),
                 (float)Game1.pixelZoom, false);
+
+            this.throwComp = new ClickableComponent(
+                new Rectangle(
+                    this.xPositionOnScreen + width + 4,
+                    this.yPositionOnScreen + height - Game1.tileSize * 3 - IClickableMenu.borderWidth,
+                    Game1.tileSize, Game1.tileSize),
+                "");
 
             this.oldButton = new ClickableTextureComponent("",
                 new Rectangle(
@@ -130,8 +152,32 @@ namespace BetterCrafting
             var indexMap = new Dictionary<ItemCategory, int>();
 
             var spaceBetweenCraftingIcons = Game1.tileSize / 4;
-            int maxItemsInRow = (this.width - IClickableMenu.spaceToClearSideBorder - IClickableMenu.borderWidth) / (Game1.tileSize + spaceBetweenCraftingIcons);
+            this.maxItemsInRow = (this.width - IClickableMenu.spaceToClearSideBorder - IClickableMenu.borderWidth) / (Game1.tileSize + spaceBetweenCraftingIcons);
             var xPad = Game1.tileSize / 8;
+
+            this.selectables = new ClickableComponent[maxItemsInRow * 2];
+
+            int id = 200;
+
+            for (int row = 0; row < 2; row++)
+            {
+                for (int column = 0; column < maxItemsInRow; column++)
+                {
+                    var x = this.pageX + xPad + column * (Game1.tileSize + spaceBetweenCraftingIcons);
+                    var y = this.pageY + row * (Game1.tileSize * 2 + spaceBetweenCraftingIcons);
+
+                    var c = new ClickableComponent(new Rectangle(x, y, Game1.tileSize, Game1.tileSize), "");
+                    c.myID = id;
+                    c.upNeighborID = id - maxItemsInRow;
+                    c.rightNeighborID = id + 1;
+                    c.downNeighborID = id + maxItemsInRow;
+                    c.leftNeighborID = id - 1;
+
+                    this.selectables[column + row * maxItemsInRow] = c;
+
+                    id += 1;
+                }
+            }
 
             foreach (var recipeName in CraftingRecipe.craftingRecipes.Keys)
             {
@@ -173,12 +219,328 @@ namespace BetterCrafting
                 this.recipes[category].Add(c, recipe);
 
                 indexMap[category] += 1;
+                id += 1;
             }
+        }
+
+        public override void applyMovementKey(int direction)
+        {
+            this.betterCrafting.Monitor.Log($"dir: {direction}, id: {this.snappedId}, sect: {this.snappedSection}");
+            Game1.playSound("shiny4");
+
+            if (this.snappedSection == 0)
+            {
+                this.currentlySnappedComponent = this.categories.Keys.ToArray()[snappedId];
+
+                if (direction == 0)
+                {
+                    if (this.snappedId > 0)
+                    {
+                        this.snappedId -= 1;
+                        this.currentlySnappedComponent = this.categories.Keys.ToArray()[snappedId];
+                    }
+                    else
+                    {
+                        this.snappedId = GameMenu.craftingTab;
+                        this.snappedSection = 2;
+
+                        var gameMenu = (GameMenu)Game1.activeClickableMenu;
+                        var tabs = this.betterCrafting.Helper.Reflection.GetField<List<ClickableComponent>>(gameMenu, "tabs").GetValue();
+                        Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
+                        return;
+                    }
+                }
+                else if (direction == 1)
+                {
+                    if (this.snappedId <= this.categories.Keys.Count / 2)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = 0;
+                        this.currentlySnappedComponent = this.selectables[snappedId];
+                    }
+                    else
+                    {
+                        this.snappedSection = 3;
+                        this.snappedId = 0;
+                        this.inventory.currentlySnappedComponent = this.inventory.inventory[0];
+                        this.inventory.snapCursorToCurrentSnappedComponent();
+                        return;
+                    }
+                }
+                else if (direction == 2)
+                {
+                    if (this.snappedId < this.categories.Keys.Count - 1)
+                    {
+                        this.snappedId += 1;
+                        this.currentlySnappedComponent = this.categories.Keys.ToArray()[snappedId];
+                    }
+                }
+            }
+            else if (this.snappedSection == 1)
+            {
+                var column = this.snappedId % this.maxItemsInRow;
+                var row = this.snappedId / this.maxItemsInRow;
+
+                if (direction == 0)
+                {
+                    if (row > 0)
+                    {
+                        this.snappedId -= this.maxItemsInRow;
+                        this.currentlySnappedComponent = this.selectables[column + (row - 1) * this.maxItemsInRow];
+                    }
+                    else
+                    {
+                        this.snappedId = GameMenu.craftingTab;
+                        this.snappedSection = 2;
+
+                        var gameMenu = (GameMenu)Game1.activeClickableMenu;
+                        var tabs = this.betterCrafting.Helper.Reflection.GetField<List<ClickableComponent>>(gameMenu, "tabs").GetValue();
+                        Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
+                        return;
+                    }
+                }
+                else if (direction == 1)
+                {
+                    if (column < this.maxItemsInRow - 1)
+                    {
+                        this.snappedId += 1;
+                        this.currentlySnappedComponent = this.selectables[column + 1 + row * this.maxItemsInRow];
+                    }
+                    else
+                    {
+                        this.snappedId = 1;
+                        this.snappedSection = 4;
+                        this.applyMovementKey(0);
+                    }
+                }
+                else if (direction == 2)
+                {
+                    if (row < 1)
+                    {
+                        this.snappedId += this.maxItemsInRow;
+                        this.currentlySnappedComponent = this.selectables[column + (row + 1) * this.maxItemsInRow];
+                    }
+                    else
+                    {
+                        this.snappedSection = 3;
+                        this.snappedId = 0;
+                        this.inventory.currentlySnappedComponent = this.inventory.inventory[column];
+                        this.inventory.snapCursorToCurrentSnappedComponent();
+                        return;
+                    }
+                }
+                else if (direction == 3)
+                {
+                    if (column > 0)
+                    {
+                        this.snappedId -= 1;
+                        this.currentlySnappedComponent = this.selectables[column - 1 + row * this.maxItemsInRow];
+                    }
+                    else
+                    {
+                        this.snappedSection = 0;
+                        this.snappedId = 0;
+                        this.currentlySnappedComponent = this.categories.Keys.First();
+                    }
+                }
+            }
+            else if (this.snappedSection == 2)
+            {
+                this.currentlySnappedComponent = null;
+
+                if (direction == 1)
+                {
+                    var gameMenu = (GameMenu)Game1.activeClickableMenu;
+                    var tabs = this.betterCrafting.Helper.Reflection.GetField<List<ClickableComponent>>(gameMenu, "tabs").GetValue();
+
+                    if (this.snappedId < tabs.Count - 1)
+                    {
+                        this.snappedId += 1;
+                        Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
+                    }
+
+                    return;
+                }
+                else if (direction == 2)
+                {
+                    this.snapToDefaultClickableComponent();
+                }
+                else if (direction == 3)
+                {
+                    if (this.snappedId > 0)
+                    {
+                        this.snappedId -= 1;
+
+                        var gameMenu = (GameMenu)Game1.activeClickableMenu;
+                        var tabs = this.betterCrafting.Helper.Reflection.GetField<List<ClickableComponent>>(gameMenu, "tabs").GetValue();
+                        Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
+                    }
+
+                    return;
+                }
+            }
+            else if (snappedSection == 3)
+            {
+                if (direction == 0 && this.inventory.currentlySnappedComponent.myID < this.inventory.capacity / this.inventory.rows)
+                {
+                    this.snappedSection = 1;
+                    this.snappedId = Math.Min(Math.Max(1, this.inventory.currentlySnappedComponent.myID), this.maxItemsInRow - 1) + this.maxItemsInRow;
+                    this.applyMovementKey(3);
+                }
+                else if (direction == 1 && (this.inventory.currentlySnappedComponent.myID + 1) % (this.inventory.capacity / this.inventory.rows) == 0)
+                {
+                    this.snappedSection = 4;
+                    this.snappedId = 2;
+                    this.applyMovementKey(2);
+                }
+                else if (direction == 3 && (this.inventory.currentlySnappedComponent.myID) % (this.inventory.capacity / this.inventory.rows) == 0)
+                {
+                    this.snappedId = this.categories.Keys.Count - 2;
+                    this.snappedSection = 0;
+                    this.applyMovementKey(2);
+                }
+                else
+                {
+                    this.inventory.applyMovementKey(direction);
+                }                
+
+                return;
+            }
+            else if (snappedSection == 4)
+            {
+                if (direction == 0 && snappedId > 0)
+                {
+                    this.snappedId -= 1;
+
+                    if (snappedId == 0)
+                    {
+                        var gameMenu = (GameMenu)Game1.activeClickableMenu;
+                        if (gameMenu.junimoNoteIcon != null)
+                        {
+                            this.currentlySnappedComponent = gameMenu.junimoNoteIcon;
+                        }
+                        else
+                        {
+                            this.snappedId = 2;
+                            this.applyMovementKey(0);
+                        }
+                    }
+                    else if (snappedId == 1)
+                    {
+                        this.currentlySnappedComponent = this.oldButton;
+                    }
+                    else if (snappedId == 2)
+                    {
+                        this.currentlySnappedComponent = this.trashCan;
+                    }
+                }
+                else if (direction == 2 && snappedId < 3)
+                {
+                    this.snappedId += 1;
+                    if (snappedId == 1)
+                    {
+                        this.currentlySnappedComponent = this.oldButton;
+                    }
+                    else if (snappedId == 2)
+                    {
+                        this.currentlySnappedComponent = this.trashCan;
+                    }
+                    else if (snappedId == 3)
+                    {
+                        this.currentlySnappedComponent = this.throwComp;
+                    }
+                }
+                else if (direction == 3)
+                {
+                    if (this.snappedId < 3)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = this.maxItemsInRow * 2 - 2;
+                        this.applyMovementKey(1);
+                    }
+                    else
+                    {
+                        this.snappedSection = 3;
+                        this.snappedId = 0;
+                        this.inventory.currentlySnappedComponent = this.inventory.inventory[this.inventory.capacity / this.inventory.rows - 1];
+                        this.inventory.snapCursorToCurrentSnappedComponent();
+                        return;
+                    }
+                }
+            }
+
+            this.snapCursorToCurrentSnappedComponent();
+        }
+
+        private void SetCategory(ClickableComponent c)
+        {
+            if (!this.categories.Keys.Contains(c))
+            {
+                return;
+            }
+
+            if (!this.selectedCategory.Equals(this.categories[c]))
+            {
+                Game1.playSound("smallSelect");
+            }
+
+            foreach (var c2 in this.categories.Keys)
+            {
+                c2.name = AVAILABLE;
+            }
+
+            c.name = UNAVAILABLE;
+
+            this.selectedCategory = this.categories[c];
+        }
+
+        public override void snapToDefaultClickableComponent()
+        {
+            this.snappedId = 1;
+            this.snappedSection = 1;
+
+            this.applyMovementKey(3);
         }
 
         public override bool readyToClose()
         {
             return this.heldItem == null;
+        }
+
+        public override void receiveScrollWheelAction(int direction)
+        {
+            base.receiveScrollWheelAction(direction);
+
+            if (direction > 0)
+            {
+                foreach (var c in this.categories.Keys)
+                {
+                    if (this.categories[c].Equals(this.selectedCategory))
+                    {
+                        var id = c.myID;
+                        if (id > 0)
+                        {
+                            this.SetCategory(this.categories.Keys.ToArray()[id - 1]);
+                        }
+                        break;
+                    }
+                }
+            }
+            else if (direction < 0)
+            {
+                foreach (var c in this.categories.Keys)
+                {
+                    if (this.categories[c].Equals(this.selectedCategory))
+                    {
+                        var id = c.myID;
+                        if (id < this.categories.Count - 1)
+                        {
+                            this.SetCategory(this.categories.Keys.ToArray()[id + 1]);
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
         public override void performHoverAction(int x, int y)
@@ -262,19 +624,7 @@ namespace BetterCrafting
             {
                 if (c.containsPoint(x, y))
                 {
-                    if (!this.selectedCategory.Equals(this.categories[c]))
-                    {
-                        Game1.playSound("smallSelect");
-                    }
-
-                    foreach (var c2 in this.categories.Keys)
-                    {
-                        c2.name = AVAILABLE;
-                    }
-
-                    c.name = UNAVAILABLE;
-
-                    this.selectedCategory = this.categories[c];
+                    this.SetCategory(c);
                 }
             }
 
