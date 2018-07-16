@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BetterCrafting
 {
-    class CategoryManager
+    public class CategoryManager
     {
         public struct ItemCategory
         {

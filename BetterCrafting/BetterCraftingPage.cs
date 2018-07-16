@@ -63,7 +63,7 @@ namespace BetterCrafting
         private int snappedId = 0;
         private int snappedSection = 1;
 
-        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData)
+        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory)
             : base(Game1.activeClickableMenu.xPositionOnScreen, Game1.activeClickableMenu.yPositionOnScreen, Game1.activeClickableMenu.width, Game1.activeClickableMenu.height)
         {
             this.betterCrafting = betterCrafting;
@@ -78,7 +78,14 @@ namespace BetterCrafting
             this.pageX = this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + IClickableMenu.borderWidth - Game1.tileSize / 4;
             this.pageY = this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + IClickableMenu.borderWidth - Game1.tileSize / 4;
 
-            this.selectedCategory = this.categoryManager.GetDefaultItemCategory();
+            if (defaultCategory.HasValue)
+            {
+                this.selectedCategory = defaultCategory.Value;
+            }
+            else
+            {
+                this.selectedCategory = this.categoryManager.GetDefaultItemCategory();
+            }
             this.recipePage = 0;
 
             this.recipes = new Dictionary<ItemCategory, List<Dictionary<ClickableTextureComponent, CraftingRecipe>>>();
@@ -312,6 +319,7 @@ namespace BetterCrafting
             c.name = UNAVAILABLE;
 
             this.selectedCategory = this.categories[c];
+            this.betterCrafting.lastCategory = this.selectedCategory;
 
             this.recipePage = 0;
             this.UpdateScrollButtons();

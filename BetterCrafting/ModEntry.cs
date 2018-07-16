@@ -8,12 +8,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static BetterCrafting.CategoryManager;
 
 namespace BetterCrafting
 {
     public class ModEntry : Mod
     {
         private CategoryData categoryData;
+        public Nullable<ItemCategory> lastCategory;
 
         public override void Entry(IModHelper helper)
         {
@@ -36,7 +38,7 @@ namespace BetterCrafting
             {
                 var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
                 var pages = this.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
-                pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData);
+                pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData, this.lastCategory);
             }
         }
 
