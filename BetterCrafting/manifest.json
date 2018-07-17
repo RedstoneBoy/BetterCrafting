@@ -5,6 +5,6 @@
    "Description": "Better crafting gui.",
    "UniqueID": "RedstoneBoy.BetterCrafting",
    "EntryDll": "BetterCrafting.dll",
-   "MinimumApiVersion": "2.0",
+   "MinimumApiVersion": "2.6-beta",
    "UpdateKeys": [ "Nexus:2504", "GitHub:RedstoneBoy/BetterCrafting" ]
 }
