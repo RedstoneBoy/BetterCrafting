@@ -400,7 +400,7 @@ namespace BetterCrafting
                         this.snappedSection = 2;
 
                         var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                        var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                        var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
                         Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
                         return;
                     }
@@ -448,7 +448,7 @@ namespace BetterCrafting
                         this.snappedId = GameMenu.craftingTab;
                         this.snappedSection = 2;
                         var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                        var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                        var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
                         Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
                         return;
                     }
@@ -505,7 +505,7 @@ namespace BetterCrafting
                 if (direction == 1)
                 {
                     var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                    var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                    var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
 
                     if (this.snappedId < tabs.Count - 1)
                     {
@@ -526,7 +526,7 @@ namespace BetterCrafting
                         this.snappedId -= 1;
 
                         var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                        var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                        var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
                         Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
                     }
 
@@ -791,7 +791,7 @@ namespace BetterCrafting
                 Game1.playSound("select");
 
                 GameMenu gameMenu = (GameMenu)Game1.activeClickableMenu;
-                var pages = this.betterCrafting.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
+                var pages = this.betterCrafting.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
                 pages[gameMenu.currentTab] = new CraftingPage(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height, false);
 
                 return;

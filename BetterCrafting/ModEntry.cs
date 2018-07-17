@@ -37,7 +37,7 @@ namespace BetterCrafting
             if (e.NewMenu is GameMenu gameMenu)
             {
                 var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
-                var pages = this.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
+                var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
                 pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData, this.lastCategory);
             }
         }
@@ -49,15 +49,10 @@ namespace BetterCrafting
                 var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
                 if (gameMenu.currentTab == craftingTabNum)
                 {
-                    var pages = this.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
+                    var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
                     ((BetterCraftingPage)pages[craftingTabNum]).UpdateInventory();
                 }
             }
-        }
-
-        public TValue GetFieldValue<TValue>(object obj, string name, bool required = true)
-        {
-            return this.Helper.Reflection.GetPrivateField<TValue>(obj, name, required).GetValue();
         }
     }
 }

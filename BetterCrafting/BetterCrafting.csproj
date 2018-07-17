@@ -64,6 +64,7 @@
     <Compile Include="CategoryData.cs" />
     <Compile Include="CategoryManager.cs" />
     <Compile Include="BetterCraftingPage.cs" />
+    <Compile Include="ReflectionExtension.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
