@@ -462,9 +462,36 @@ namespace BetterCrafting
                     }
                     else
                     {
-                        this.snappedId = 1;
-                        this.snappedSection = 4;
-                        this.applyMovementKey(0);
+                        if (row == 0)
+                        {
+                            if (this.upButton == null)
+                            {
+                                this.snappedId = 1;
+                                this.snappedSection = 4;
+                                this.applyMovementKey(0);
+                            }
+                            else
+                            {
+                                this.snappedSection = 5;
+                                this.snappedId = 1;
+                                this.applyMovementKey(0);
+                            }
+                        }
+                        else
+                        {
+                            if (this.downButton == null)
+                            {
+                                this.snappedId = 1;
+                                this.snappedSection = 4;
+                                this.applyMovementKey(2);
+                            }
+                            else
+                            {
+                                this.snappedSection = 5;
+                                this.snappedId = 0;
+                                this.applyMovementKey(2);
+                            }
+                        }
                     }
                 }
                 else if (direction == 2)
@@ -537,9 +564,18 @@ namespace BetterCrafting
             {
                 if (direction == 0 && this.inventory.currentlySnappedComponent.myID < this.inventory.capacity / this.inventory.rows)
                 {
-                    this.snappedSection = 1;
-                    this.snappedId = Math.Min(Math.Max(1, this.inventory.currentlySnappedComponent.myID), this.maxItemsInRow - 1) + this.maxItemsInRow;
-                    this.applyMovementKey(3);
+                    if (this.inventory.currentlySnappedComponent.myID == this.inventory.capacity / this.inventory.rows - 1)
+                    {
+                        this.snappedSection = 5;
+                        this.snappedId = 0;
+                        this.applyMovementKey(2);
+                    }
+                    else
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = Math.Min(Math.Max(1, this.inventory.currentlySnappedComponent.myID), this.maxItemsInRow - 1) + this.maxItemsInRow;
+                        this.applyMovementKey(3);
+                    }
                 }
                 else if (direction == 1 && (this.inventory.currentlySnappedComponent.myID + 1) % (this.inventory.capacity / this.inventory.rows) == 0)
                 {
@@ -606,11 +642,35 @@ namespace BetterCrafting
                 }
                 else if (direction == 3)
                 {
-                    if (this.snappedId < 3)
+                    if (this.snappedId < 2)
                     {
-                        this.snappedSection = 1;
-                        this.snappedId = this.maxItemsInRow * 2 - 2;
-                        this.applyMovementKey(1);
+                        if (this.upButton != null)
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 1;
+                            this.applyMovementKey(0);
+                        }
+                        else
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 0;
+                            this.applyMovementKey(3);
+                        }
+                    }
+                    else if (this.snappedId == 2)
+                    {
+                        if (this.downButton != null)
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 0;
+                            this.applyMovementKey(2);
+                        }
+                        else
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 1;
+                            this.applyMovementKey(3);
+                        }
                     }
                     else
                     {
@@ -619,6 +679,69 @@ namespace BetterCrafting
                         this.inventory.currentlySnappedComponent = this.inventory.inventory[this.inventory.capacity / this.inventory.rows - 1];
                         this.inventory.snapCursorToCurrentSnappedComponent();
                         return;
+                    }
+                }
+            }
+            else if (snappedSection == 5)
+            {
+                if (direction == 0)
+                {
+                    if (snappedId == 1)
+                    {
+                        snappedId = 0;
+                        this.currentlySnappedComponent = this.upButton;
+                    }
+                    else if (snappedId == 0)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = 0;
+                        this.applyMovementKey(0);
+                    }
+                }
+                else if (direction == 1)
+                {
+                    if (snappedId == 0)
+                    {
+                        this.snappedSection = 4;
+                        this.snappedId = 1;
+                        this.applyMovementKey(0);
+                    }
+                    else
+                    {
+                        this.snappedSection = 4;
+                        this.snappedId = 1;
+                        this.applyMovementKey(3);
+                    }
+                }
+                else if (direction == 2)
+                {
+                    if (snappedId == 0)
+                    {
+                        this.snappedId = 1;
+                        this.currentlySnappedComponent = this.downButton;
+                    }
+                    else
+                    {
+                        this.snappedSection = 3;
+                        this.snappedId = 0;
+                        this.inventory.currentlySnappedComponent = this.inventory.inventory[this.inventory.capacity / this.inventory.rows - 1];
+                        this.inventory.snapCursorToCurrentSnappedComponent();
+                        return;
+                    }
+                }
+                else if (direction == 3)
+                {
+                    if (snappedId == 0)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = this.maxItemsInRow - 2;
+                        this.applyMovementKey(1);
+                    }
+                    else if (snappedId == 1)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = this.maxItemsInRow * ROWS - 2;
+                        this.applyMovementKey(1);
                     }
                 }
             }
