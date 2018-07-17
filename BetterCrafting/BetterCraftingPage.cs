@@ -218,8 +218,6 @@ namespace BetterCrafting
                     pageMap[category] += 1;
                     indexMap[category] = 0;
 
-                    this.betterCrafting.Monitor.Log("Adding page");
-
                     this.recipes[category].Add(new Dictionary<ClickableTextureComponent, CraftingRecipe>());
                 }
 
