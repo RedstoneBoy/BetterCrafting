@@ -679,7 +679,7 @@ namespace BetterCrafting
                 {
                     if (c.hoverText.Equals(UNKNOWN))
                     {
-                        this.hoverText = currentPage[c].name + " (unknown)";
+                        this.hoverText = currentPage[c].name + " (not yet learned)";
                     }
                     else
                     {
