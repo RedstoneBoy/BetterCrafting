@@ -8,12 +8,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static BetterCrafting.CategoryManager;
 
 namespace BetterCrafting
 {
     public class ModEntry : Mod
     {
         private CategoryData categoryData;
+        public Nullable<ItemCategory> lastCategory;
 
         public override void Entry(IModHelper helper)
         {
@@ -35,8 +37,8 @@ namespace BetterCrafting
             if (e.NewMenu is GameMenu gameMenu)
             {
                 var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
-                var pages = this.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
-                pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData);
+                var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
+                pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData, this.lastCategory);
             }
         }
 
@@ -47,15 +49,10 @@ namespace BetterCrafting
                 var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
                 if (gameMenu.currentTab == craftingTabNum)
                 {
-                    var pages = this.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
+                    var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
                     ((BetterCraftingPage)pages[craftingTabNum]).UpdateInventory();
                 }
             }
-        }
-
-        public TValue GetFieldValue<TValue>(object obj, string name, bool required = true)
-        {
-            return this.Helper.Reflection.GetField<TValue>(obj, name, required).GetValue();
         }
     }
 }

@@ -66,6 +66,7 @@
     <Compile Include="BetterCraftingPage.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReflectionExtension.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="categories.json">
