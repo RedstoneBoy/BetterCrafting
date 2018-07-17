@@ -19,6 +19,7 @@ namespace BetterCrafting
         private const string AVAILABLE = "a";
         private const string UNAVAILABLE = "u";
         private const string UNKNOWN = "k";
+        private const int ROWS = 2;
 
         private int pageX;
         private int pageY;
@@ -29,12 +30,16 @@ namespace BetterCrafting
 
         private InventoryMenu inventory;
 
-        private Dictionary<ItemCategory, Dictionary<ClickableTextureComponent, CraftingRecipe>> recipes;
+        private Dictionary<ItemCategory, List<Dictionary<ClickableTextureComponent, CraftingRecipe>>> recipes;
         private Dictionary<ClickableComponent, ItemCategory> categories;
+
+        private ClickableTextureComponent upButton;
+        private ClickableTextureComponent downButton;
 
         private ClickableComponent[] selectables;
 
         private ItemCategory selectedCategory;
+        private int recipePage;
 
         private ClickableTextureComponent trashCan;
         private float trashCanLidRotation;
@@ -53,11 +58,12 @@ namespace BetterCrafting
         private string categoryText;
 
         private int maxItemsInRow;
+        private int totalIconSize;
 
         private int snappedId = 0;
         private int snappedSection = 1;
 
-        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData)
+        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory)
             : base(Game1.activeClickableMenu.xPositionOnScreen, Game1.activeClickableMenu.yPositionOnScreen, Game1.activeClickableMenu.width, Game1.activeClickableMenu.height)
         {
             this.betterCrafting = betterCrafting;
@@ -72,9 +78,17 @@ namespace BetterCrafting
             this.pageX = this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + IClickableMenu.borderWidth - Game1.tileSize / 4;
             this.pageY = this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + IClickableMenu.borderWidth - Game1.tileSize / 4;
 
-            this.selectedCategory = this.categoryManager.GetDefaultItemCategory();
+            if (defaultCategory.HasValue)
+            {
+                this.selectedCategory = defaultCategory.Value;
+            }
+            else
+            {
+                this.selectedCategory = this.categoryManager.GetDefaultItemCategory();
+            }
+            this.recipePage = 0;
 
-            this.recipes = new Dictionary<ItemCategory, Dictionary<ClickableTextureComponent, CraftingRecipe>>();
+            this.recipes = new Dictionary<ItemCategory, List<Dictionary<ClickableTextureComponent, CraftingRecipe>>>();
             this.categories = new Dictionary<ClickableComponent, ItemCategory>();
 
             int catIndex = 0;
@@ -86,7 +100,7 @@ namespace BetterCrafting
 
             foreach (ItemCategory category in this.categoryManager.GetItemCategories())
             {
-                this.recipes[category] = new Dictionary<ClickableTextureComponent, CraftingRecipe>();
+                this.recipes.Add(category, new List<Dictionary<ClickableTextureComponent, CraftingRecipe>>());
 
                 var catName = this.categoryManager.GetItemCategoryName(category);
 
@@ -147,19 +161,22 @@ namespace BetterCrafting
             foreach (var category in this.recipes.Keys)
             {
                 this.recipes[category].Clear();
+                this.recipes[category].Add(new Dictionary<ClickableTextureComponent, CraftingRecipe>());
             }
 
             var indexMap = new Dictionary<ItemCategory, int>();
+            var pageMap = new Dictionary<ItemCategory, int>();
 
             var spaceBetweenCraftingIcons = Game1.tileSize / 4;
-            this.maxItemsInRow = (this.width - IClickableMenu.spaceToClearSideBorder - IClickableMenu.borderWidth) / (Game1.tileSize + spaceBetweenCraftingIcons);
+            this.totalIconSize = Game1.tileSize + spaceBetweenCraftingIcons;
+            this.maxItemsInRow = (this.width - IClickableMenu.spaceToClearSideBorder - IClickableMenu.borderWidth) / this.totalIconSize - 1;
             var xPad = Game1.tileSize / 8;
 
-            this.selectables = new ClickableComponent[maxItemsInRow * 2];
+            this.selectables = new ClickableComponent[maxItemsInRow * ROWS];
 
             int id = 200;
 
-            for (int row = 0; row < 2; row++)
+            for (int row = 0; row < ROWS; row++)
             {
                 for (int column = 0; column < maxItemsInRow; column++)
                 {
@@ -191,6 +208,21 @@ namespace BetterCrafting
                     indexMap.Add(category, 0);
                 }
 
+                if (!pageMap.ContainsKey(category))
+                {
+                    pageMap.Add(category, 0);
+                }
+
+                if (indexMap[category] >= maxItemsInRow * ROWS)
+                {
+                    pageMap[category] += 1;
+                    indexMap[category] = 0;
+
+                    this.betterCrafting.Monitor.Log("Adding page");
+
+                    this.recipes[category].Add(new Dictionary<ClickableTextureComponent, CraftingRecipe>());
+                }
+
                 var column = indexMap[category] % maxItemsInRow;
                 var row = indexMap[category] / maxItemsInRow;
 
@@ -216,16 +248,139 @@ namespace BetterCrafting
                     (float)Game1.pixelZoom,
                     false);
 
-                this.recipes[category].Add(c, recipe);
+                this.recipes[category][pageMap[category]].Add(c, recipe);
 
                 indexMap[category] += 1;
-                id += 1;
             }
+
+            this.UpdateScrollButtons();
+        }
+
+        private void UpdateScrollButtons()
+        {
+            this.upButton = null;
+            this.downButton = null;
+
+            if (this.recipePage > 0)
+            {
+                this.upButton = new ClickableTextureComponent(
+                    new Rectangle(
+                        this.xPositionOnScreen + this.maxItemsInRow * this.totalIconSize + Game1.tileSize,
+                        this.pageY,
+                        Game1.tileSize,
+                        Game1.tileSize),
+                    Game1.mouseCursors,
+                    Game1.getSourceRectForStandardTileSheet(Game1.mouseCursors, 12, -1, -1),
+                    0.8f);
+            }
+
+            if (this.recipePage < this.recipes[this.selectedCategory].Count - 1)
+            {
+                this.downButton = new ClickableTextureComponent(
+                    new Rectangle(
+                        this.xPositionOnScreen + this.maxItemsInRow * this.totalIconSize + Game1.tileSize,
+                        this.pageY + Game1.tileSize * 3 + Game1.tileSize / 2,
+                        Game1.tileSize,
+                        Game1.tileSize),
+                    Game1.mouseCursors,
+                    Game1.getSourceRectForStandardTileSheet(Game1.mouseCursors, 11, -1, -1),
+                    0.8f);
+            }
+        }
+
+        private Dictionary<ClickableTextureComponent, CraftingRecipe> GetCurrentPage()
+        {
+            var craftingPages = this.recipes[this.selectedCategory];
+            if (this.recipePage >= craftingPages.Count)
+            {
+                this.recipePage = 0;
+            }
+
+            return craftingPages[this.recipePage];
+        }
+
+        private void SetCategory(ClickableComponent c)
+        {
+            if (!this.categories.Keys.Contains(c))
+            {
+                return;
+            }
+
+            if (!this.selectedCategory.Equals(this.categories[c]))
+            {
+                Game1.playSound("smallSelect");
+            }
+
+            foreach (var c2 in this.categories.Keys)
+            {
+                c2.name = AVAILABLE;
+            }
+
+            c.name = UNAVAILABLE;
+
+            this.selectedCategory = this.categories[c];
+            this.betterCrafting.lastCategory = this.selectedCategory;
+
+            this.recipePage = 0;
+            this.UpdateScrollButtons();
+        }
+
+        private void ScrollUp()
+        {
+            if (this.recipePage <= 0)
+            {
+                foreach (var c in this.categories.Keys)
+                {
+                    if (this.categories[c].Equals(this.selectedCategory))
+                    {
+                        var id = c.myID;
+                        if (id > 0)
+                        {
+                            this.SetCategory(this.categories.Keys.ToArray()[id - 1]);
+                        }
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                this.recipePage -= 1;
+
+                Game1.playSound("shwip");
+            }
+
+            this.UpdateScrollButtons();
+        }
+
+        private void ScrollDown()
+        {
+            if (this.recipePage >= this.recipes[this.selectedCategory].Count - 1)
+            {
+                foreach (var c in this.categories.Keys)
+                {
+                    if (this.categories[c].Equals(this.selectedCategory))
+                    {
+                        var id = c.myID;
+                        if (id < this.categories.Count - 1)
+                        {
+                            this.SetCategory(this.categories.Keys.ToArray()[id + 1]);
+                        }
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                this.recipePage += 1;
+
+                Game1.playSound("shwip");
+            }            
+
+            this.UpdateScrollButtons();
         }
 
         public override void applyMovementKey(int direction)
         {
-            this.betterCrafting.Monitor.Log($"dir: {direction}, id: {this.snappedId}, sect: {this.snappedSection}");
             Game1.playSound("shiny4");
 
             if (this.snappedSection == 0)
@@ -245,7 +400,7 @@ namespace BetterCrafting
                         this.snappedSection = 2;
 
                         var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                        var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                        var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
                         Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
                         return;
                     }
@@ -293,7 +448,7 @@ namespace BetterCrafting
                         this.snappedId = GameMenu.craftingTab;
                         this.snappedSection = 2;
                         var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                        var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                        var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
                         Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
                         return;
                     }
@@ -307,9 +462,36 @@ namespace BetterCrafting
                     }
                     else
                     {
-                        this.snappedId = 1;
-                        this.snappedSection = 4;
-                        this.applyMovementKey(0);
+                        if (row == 0)
+                        {
+                            if (this.upButton == null)
+                            {
+                                this.snappedId = 1;
+                                this.snappedSection = 4;
+                                this.applyMovementKey(0);
+                            }
+                            else
+                            {
+                                this.snappedSection = 5;
+                                this.snappedId = 1;
+                                this.applyMovementKey(0);
+                            }
+                        }
+                        else
+                        {
+                            if (this.downButton == null)
+                            {
+                                this.snappedId = 1;
+                                this.snappedSection = 4;
+                                this.applyMovementKey(2);
+                            }
+                            else
+                            {
+                                this.snappedSection = 5;
+                                this.snappedId = 0;
+                                this.applyMovementKey(2);
+                            }
+                        }
                     }
                 }
                 else if (direction == 2)
@@ -350,7 +532,7 @@ namespace BetterCrafting
                 if (direction == 1)
                 {
                     var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                    var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                    var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
 
                     if (this.snappedId < tabs.Count - 1)
                     {
@@ -371,7 +553,7 @@ namespace BetterCrafting
                         this.snappedId -= 1;
 
                         var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                        var tabs = this.betterCrafting.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
+                        var tabs = this.betterCrafting.Helper.Reflection.GetFieldValue<List<ClickableComponent>>(gameMenu, "tabs");
                         Game1.setMousePosition(tabs[this.snappedId].bounds.Center);
                     }
 
@@ -382,9 +564,18 @@ namespace BetterCrafting
             {
                 if (direction == 0 && this.inventory.currentlySnappedComponent.myID < this.inventory.capacity / this.inventory.rows)
                 {
-                    this.snappedSection = 1;
-                    this.snappedId = Math.Min(Math.Max(1, this.inventory.currentlySnappedComponent.myID), this.maxItemsInRow - 1) + this.maxItemsInRow;
-                    this.applyMovementKey(3);
+                    if (this.inventory.currentlySnappedComponent.myID == this.inventory.capacity / this.inventory.rows - 1)
+                    {
+                        this.snappedSection = 5;
+                        this.snappedId = 0;
+                        this.applyMovementKey(2);
+                    }
+                    else
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = Math.Min(Math.Max(1, this.inventory.currentlySnappedComponent.myID), this.maxItemsInRow - 1) + this.maxItemsInRow;
+                        this.applyMovementKey(3);
+                    }
                 }
                 else if (direction == 1 && (this.inventory.currentlySnappedComponent.myID + 1) % (this.inventory.capacity / this.inventory.rows) == 0)
                 {
@@ -451,11 +642,35 @@ namespace BetterCrafting
                 }
                 else if (direction == 3)
                 {
-                    if (this.snappedId < 3)
+                    if (this.snappedId < 2)
                     {
-                        this.snappedSection = 1;
-                        this.snappedId = this.maxItemsInRow * 2 - 2;
-                        this.applyMovementKey(1);
+                        if (this.upButton != null)
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 1;
+                            this.applyMovementKey(0);
+                        }
+                        else
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 0;
+                            this.applyMovementKey(3);
+                        }
+                    }
+                    else if (this.snappedId == 2)
+                    {
+                        if (this.downButton != null)
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 0;
+                            this.applyMovementKey(2);
+                        }
+                        else
+                        {
+                            this.snappedSection = 5;
+                            this.snappedId = 1;
+                            this.applyMovementKey(3);
+                        }
                     }
                     else
                     {
@@ -467,30 +682,71 @@ namespace BetterCrafting
                     }
                 }
             }
+            else if (snappedSection == 5)
+            {
+                if (direction == 0)
+                {
+                    if (snappedId == 1)
+                    {
+                        snappedId = 0;
+                        this.currentlySnappedComponent = this.upButton;
+                    }
+                    else if (snappedId == 0)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = 0;
+                        this.applyMovementKey(0);
+                    }
+                }
+                else if (direction == 1)
+                {
+                    if (snappedId == 0)
+                    {
+                        this.snappedSection = 4;
+                        this.snappedId = 1;
+                        this.applyMovementKey(0);
+                    }
+                    else
+                    {
+                        this.snappedSection = 4;
+                        this.snappedId = 1;
+                        this.applyMovementKey(3);
+                    }
+                }
+                else if (direction == 2)
+                {
+                    if (snappedId == 0)
+                    {
+                        this.snappedId = 1;
+                        this.currentlySnappedComponent = this.downButton;
+                    }
+                    else
+                    {
+                        this.snappedSection = 3;
+                        this.snappedId = 0;
+                        this.inventory.currentlySnappedComponent = this.inventory.inventory[this.inventory.capacity / this.inventory.rows - 1];
+                        this.inventory.snapCursorToCurrentSnappedComponent();
+                        return;
+                    }
+                }
+                else if (direction == 3)
+                {
+                    if (snappedId == 0)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = this.maxItemsInRow - 2;
+                        this.applyMovementKey(1);
+                    }
+                    else if (snappedId == 1)
+                    {
+                        this.snappedSection = 1;
+                        this.snappedId = this.maxItemsInRow * ROWS - 2;
+                        this.applyMovementKey(1);
+                    }
+                }
+            }
 
             this.snapCursorToCurrentSnappedComponent();
-        }
-
-        private void SetCategory(ClickableComponent c)
-        {
-            if (!this.categories.Keys.Contains(c))
-            {
-                return;
-            }
-
-            if (!this.selectedCategory.Equals(this.categories[c]))
-            {
-                Game1.playSound("smallSelect");
-            }
-
-            foreach (var c2 in this.categories.Keys)
-            {
-                c2.name = AVAILABLE;
-            }
-
-            c.name = UNAVAILABLE;
-
-            this.selectedCategory = this.categories[c];
         }
 
         public override void snapToDefaultClickableComponent()
@@ -512,33 +768,11 @@ namespace BetterCrafting
 
             if (direction > 0)
             {
-                foreach (var c in this.categories.Keys)
-                {
-                    if (this.categories[c].Equals(this.selectedCategory))
-                    {
-                        var id = c.myID;
-                        if (id > 0)
-                        {
-                            this.SetCategory(this.categories.Keys.ToArray()[id - 1]);
-                        }
-                        break;
-                    }
-                }
+                this.ScrollUp();
             }
             else if (direction < 0)
             {
-                foreach (var c in this.categories.Keys)
-                {
-                    if (this.categories[c].Equals(this.selectedCategory))
-                    {
-                        var id = c.myID;
-                        if (id < this.categories.Count - 1)
-                        {
-                            this.SetCategory(this.categories.Keys.ToArray()[id + 1]);
-                        }
-                        break;
-                    }
-                }
+                this.ScrollDown();
             }
         }
 
@@ -560,17 +794,19 @@ namespace BetterCrafting
                 this.hoverText = "";
             }
 
-            foreach (var c in this.recipes[this.selectedCategory].Keys)
+            var currentPage = this.GetCurrentPage();
+
+            foreach (var c in currentPage.Keys)
             {
                 if (c.containsPoint(x, y))
                 {
                     if (c.hoverText.Equals(UNKNOWN))
                     {
-                        this.hoverText = this.recipes[this.selectedCategory][c].name + " (unknown)";
+                        this.hoverText = currentPage[c].name + " (not yet learned)";
                     }
                     else
                     {
-                        this.hoverRecipe = this.recipes[this.selectedCategory][c];
+                        this.hoverRecipe = currentPage[c];
                     }
 
                     if (c.hoverText.Equals(AVAILABLE))
@@ -591,6 +827,30 @@ namespace BetterCrafting
                 if (c.containsPoint(x, y))
                 {
                     this.categoryText = c.label;
+                }
+            }
+
+            if (this.upButton != null)
+            {
+                if (this.upButton.containsPoint(x, y))
+                {
+                    this.upButton.scale = Math.Min(this.upButton.scale + 0.02f, this.upButton.baseScale + 0.1f);
+                }
+                else
+                {
+                    this.upButton.scale = Math.Max(this.upButton.scale - 0.02f, this.upButton.baseScale);
+                }
+            }
+
+            if (this.downButton != null)
+            {
+                if (this.downButton.containsPoint(x, y))
+                {
+                    this.downButton.scale = Math.Min(this.downButton.scale + 0.02f, this.downButton.baseScale + 0.1f);
+                }
+                else
+                {
+                    this.downButton.scale = Math.Max(this.downButton.scale - 0.02f, this.downButton.baseScale);
                 }
             }
 
@@ -627,14 +887,26 @@ namespace BetterCrafting
                 }
             }
 
-            foreach (var c in this.recipes[this.selectedCategory].Keys)
+            var currentPage = this.GetCurrentPage();
+
+            foreach (var c in currentPage.Keys)
             {
                 if (c.containsPoint(x, y)
                     && c.hoverText.Equals(AVAILABLE)
-                    && this.recipes[this.selectedCategory][c].doesFarmerHaveIngredientsInInventory())
+                    && currentPage[c].doesFarmerHaveIngredientsInInventory())
                 {
                     this.clickCraftingRecipe(c, true);
                 }
+            }
+
+            if (this.upButton != null && this.upButton.containsPoint(x, y))
+            {
+                this.ScrollUp();
+            }
+
+            if (this.downButton != null && this.downButton.containsPoint(x, y))
+            {
+                this.ScrollDown();
             }
 
             if (this.oldButton.containsPoint(x, y) && this.readyToClose())
@@ -642,7 +914,7 @@ namespace BetterCrafting
                 Game1.playSound("select");
 
                 GameMenu gameMenu = (GameMenu)Game1.activeClickableMenu;
-                var pages = this.betterCrafting.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
+                var pages = this.betterCrafting.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
                 pages[gameMenu.currentTab] = new CraftingPage(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height, false);
 
                 return;
@@ -672,7 +944,7 @@ namespace BetterCrafting
 
         private void clickCraftingRecipe(ClickableTextureComponent c, bool playSound)
         {
-            CraftingRecipe recipe = this.recipes[this.selectedCategory][c];
+            CraftingRecipe recipe = this.GetCurrentPage()[c];
             Item crafted = recipe.createItem();
 
             Game1.player.checkForQuestComplete(null, -1, -1, crafted, null, 2, -1);
@@ -713,11 +985,13 @@ namespace BetterCrafting
         {
             this.heldItem = this.inventory.rightClick(x, y, this.heldItem);
 
-            foreach (var c in this.recipes[this.selectedCategory].Keys)
+            var currentPage = this.GetCurrentPage();
+
+            foreach (var c in currentPage.Keys)
             {
                 if (c.containsPoint(x, y)
                     && c.hoverText.Equals(AVAILABLE)
-                    && this.recipes[this.selectedCategory][c].doesFarmerHaveIngredientsInInventory())
+                    && currentPage[c].doesFarmerHaveIngredientsInInventory())
                 {
                     this.clickCraftingRecipe(c, true);
                 }
@@ -727,8 +1001,10 @@ namespace BetterCrafting
         public override void draw(SpriteBatch b)
         {
             base.drawHorizontalPartition(b, this.yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + Game1.tileSize * 4);
-            
-            foreach (var c in this.recipes[this.selectedCategory].Keys)
+
+            var currentPage = this.GetCurrentPage();
+
+            foreach (var c in currentPage.Keys)
             {
                 if (c.hoverText.Equals(AVAILABLE))
                 {
@@ -768,6 +1044,9 @@ namespace BetterCrafting
                     new Vector2(c.bounds.X + Game1.tileSize / 4, c.bounds.Y + Game1.tileSize / 4),
                     textColor);
             }
+
+            if (this.upButton != null) this.upButton.draw(b);
+            if (this.downButton != null) this.downButton.draw(b);
 
             this.inventory.draw(b);
 
