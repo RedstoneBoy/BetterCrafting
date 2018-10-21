@@ -749,7 +749,6 @@ namespace BetterCrafting
 
         public override void receiveScrollWheelAction(int direction)
         {
-            base.receiveScrollWheelAction(direction);
 
             if (direction > 0)
             {
@@ -763,7 +762,6 @@ namespace BetterCrafting
 
         public override void performHoverAction(int x, int y)
         {
-            base.performHoverAction(x, y);
 
             this.hoverRecipe = null;
             this.hoverItem = this.inventory.hover(x, y, this.hoverItem);
@@ -860,7 +858,6 @@ namespace BetterCrafting
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            base.receiveLeftClick(x, y, playSound);
 
             this.heldItem = this.inventory.leftClick(x, y, this.heldItem);
 
@@ -989,7 +986,6 @@ namespace BetterCrafting
         public override void draw(SpriteBatch b)
         {
             this.UpdateInventory();
-            base.drawHorizontalPartition(b, this.yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + Game1.tileSize * 4);
 
             var currentPage = this.GetCurrentPage();
 
@@ -1054,8 +1050,6 @@ namespace BetterCrafting
                 Game1.pixelZoom,
                 SpriteEffects.None,
                 0.86f);
-
-            base.drawMouse(b);
 
             if (this.hoverItem != null)
             {
