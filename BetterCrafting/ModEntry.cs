@@ -26,6 +26,7 @@ namespace BetterCrafting
             }
 
             MenuEvents.MenuChanged += MenuChanged;
+            MenuEvents.MenuClosed += MenuClosed;
             PlayerEvents.InventoryChanged += InventoryChanged;
         }
 
@@ -37,10 +38,13 @@ namespace BetterCrafting
                 var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
                 pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData, this.lastCategory);
             }
-            else
-                oldMenu = false;
         }
 
+        private void MenuClosed(object sender, EventArgsClickableMenuClosed e)
+        {
+            oldMenu = false;
+        }
+        
         private void InventoryChanged(object sender, EventArgsInventoryChanged e)
         {
             if (Game1.activeClickableMenu is GameMenu gameMenu && !oldMenu)
