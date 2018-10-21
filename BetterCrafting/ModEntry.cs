@@ -1,5 +1,6 @@
 ﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewValley;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ namespace BetterCrafting
             }
 
             MenuEvents.MenuChanged += MenuChanged;
+            PlayerEvents.InventoryChanged += InventoryChanged;
         }
 
         private void MenuChanged(object sender, EventArgsClickableMenuChanged e)
@@ -37,6 +39,19 @@ namespace BetterCrafting
             }
             else
                 oldMenu = false;
+        }
+
+        private void InventoryChanged(object sender, EventArgsInventoryChanged e)
+        {
+            if (Game1.activeClickableMenu is GameMenu gameMenu && !oldMenu)
+            {
+                var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
+                if (gameMenu.currentTab == craftingTabNum)
+                {
+                    var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
+                    ((BetterCraftingPage)pages[craftingTabNum]).UpdateInventory();
+                }
+            }
         }
     }
 }
