@@ -998,6 +998,8 @@ namespace BetterCrafting
                 if (c.hoverText.Equals(AVAILABLE))
                 {
                     c.draw(b, Color.White, 0.89f);
+                    if (currentPage[c].numberProducedPerCraft > 1)
+                        NumberSprite.draw(currentPage[c].numberProducedPerCraft, b, new Vector2((float)(c.bounds.X + 64 - 2), (float)(c.bounds.Y + 64 - 2)), Color.Red, (float)(0.5 * ((double)c.scale / 4.0)), 0.97f, 1f, 0, 0);
                 }
                 else if (c.hoverText.Equals(UNKNOWN))
                 {
