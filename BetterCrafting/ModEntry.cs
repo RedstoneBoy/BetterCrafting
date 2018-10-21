@@ -14,6 +14,7 @@ namespace BetterCrafting
 {
     public class ModEntry : Mod
     {
+        private static bool oldMenu = false;
         private CategoryData categoryData;
         public Nullable<ItemCategory> lastCategory;
 
@@ -29,30 +30,23 @@ namespace BetterCrafting
             }
 
             MenuEvents.MenuChanged += MenuChanged;
-            PlayerEvents.InventoryChanged += InventoryChanged;
         }
 
         private void MenuChanged(object sender, EventArgsClickableMenuChanged e)
         {
-            if (e.NewMenu is GameMenu gameMenu)
+            if (e.NewMenu is GameMenu gameMenu && !oldMenu)
             {
                 var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
                 var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
-                pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData, this.lastCategory);
+                pages[craftingTabNum] = new CraftingPage(this, this.categoryData, this.lastCategory);
             }
+            else
+                oldMenu = false;
         }
 
-        private void InventoryChanged(object sender, EventArgsInventoryChanged e)
+        public static void setOldMenu(bool oldMenuActive = false)
         {
-            if (Game1.activeClickableMenu is GameMenu gameMenu)
-            {
-                var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
-                if (gameMenu.currentTab == craftingTabNum)
-                {
-                    var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
-                    ((BetterCraftingPage)pages[craftingTabNum]).UpdateInventory();
-                }
-            }
+            oldMenu = oldMenuActive;
         }
     }
 }

@@ -13,7 +13,7 @@ using static BetterCrafting.CategoryManager;
 
 namespace BetterCrafting
 {
-    class BetterCraftingPage : IClickableMenu
+    class CraftingPage : StardewValley.Menus.CraftingPage
     {
         private const int WIDTH = 800;
         private const string AVAILABLE = "a";
@@ -28,21 +28,13 @@ namespace BetterCrafting
 
         private CategoryManager categoryManager;
 
-        private InventoryMenu inventory;
-
         private Dictionary<ItemCategory, List<Dictionary<ClickableTextureComponent, CraftingRecipe>>> recipes;
         private Dictionary<ClickableComponent, ItemCategory> categories;
-
-        private ClickableTextureComponent upButton;
-        private ClickableTextureComponent downButton;
 
         private ClickableComponent[] selectables;
 
         private ItemCategory selectedCategory;
         private int recipePage;
-
-        private ClickableTextureComponent trashCan;
-        private float trashCanLidRotation;
 
         private ClickableComponent throwComp;
 
@@ -63,7 +55,7 @@ namespace BetterCrafting
         private int snappedId = 0;
         private int snappedSection = 1;
 
-        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory)
+        public CraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory)
             : base(Game1.activeClickableMenu.xPositionOnScreen, Game1.activeClickableMenu.yPositionOnScreen, Game1.activeClickableMenu.width, Game1.activeClickableMenu.height)
         {
             this.betterCrafting = betterCrafting;
@@ -914,9 +906,8 @@ namespace BetterCrafting
                 Game1.playSound("select");
 
                 GameMenu gameMenu = (GameMenu)Game1.activeClickableMenu;
-                var pages = this.betterCrafting.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
-                pages[gameMenu.currentTab] = new CraftingPage(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height, false);
-
+                BetterCrafting.ModEntry.setOldMenu(true);
+                Game1.activeClickableMenu = new GameMenu(gameMenu.currentTab);
                 return;
             }
 
