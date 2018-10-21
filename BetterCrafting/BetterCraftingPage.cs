@@ -1,19 +1,16 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static BetterCrafting.CategoryManager;
 
 namespace BetterCrafting
 {
-    class BetterCraftingPage : CraftingPage
+    internal class BetterCraftingPage : CraftingPage
     {
         private const int WIDTH = 800;
         private const string AVAILABLE = "a";
@@ -105,7 +102,7 @@ namespace BetterCrafting
                 var y = this.yPositionOnScreen + tabPad + catIndex * (height + categorySpacing);
 
                 var c = new ClickableComponent(
-                    new Rectangle((int) x, (int) y, (int) width, (int) height),
+                    new Rectangle((int)x, (int)y, (int)width, (int)height),
                     category.Equals(this.selectedCategory) ? UNAVAILABLE : AVAILABLE, catName);
                 c.myID = id;
                 c.upNeighborID = id - 1;
@@ -124,7 +121,7 @@ namespace BetterCrafting
                     Game1.tileSize, 104),
                 Game1.mouseCursors,
                 new Rectangle(669, 261, 16, 26),
-                (float)Game1.pixelZoom, false);
+                Game1.pixelZoom, false);
 
             this.throwComp = new ClickableComponent(
                 new Rectangle(
@@ -143,7 +140,7 @@ namespace BetterCrafting
                 "Old Crafting Menu",
                 Game1.mouseCursors,
                 new Rectangle(162, 440, 16, 16),
-                (float)Game1.pixelZoom, false);
+                Game1.pixelZoom, false);
         }
 
         public void UpdateInventory()
@@ -233,7 +230,7 @@ namespace BetterCrafting
                     : Game1.getSourceRectForStandardTileSheet(
                         Game1.objectSpriteSheet,
                         recipe.getIndexOfMenuView(), 16, 16),
-                    (float)Game1.pixelZoom,
+                    Game1.pixelZoom,
                     false);
 
                 this.recipes[category][pageMap[category]].Add(c, recipe);
@@ -362,7 +359,7 @@ namespace BetterCrafting
                 this.recipePage += 1;
 
                 Game1.playSound("shwip");
-            }            
+            }
 
             this.UpdateScrollButtons();
         }
@@ -580,7 +577,7 @@ namespace BetterCrafting
                 else
                 {
                     this.inventory.applyMovementKey(direction);
-                }                
+                }
 
                 return;
             }
@@ -1047,7 +1044,7 @@ namespace BetterCrafting
             this.trashCan.draw(b);
             b.Draw(
                 Game1.mouseCursors,
-                new Vector2((float)(this.trashCan.bounds.X + 60), (float)(this.trashCan.bounds.Y + 40)),
+                new Vector2(this.trashCan.bounds.X + 60, this.trashCan.bounds.Y + 40),
                 new Rectangle(686, 256, 18, 10),
                 Color.White,
                 this.trashCanLidRotation,
@@ -1080,8 +1077,8 @@ namespace BetterCrafting
             {
                 this.heldItem.drawInMenu(b,
                     new Vector2(
-                        (float)(Game1.getOldMouseX() + Game1.tileSize / 4),
-                        (float)(Game1.getOldMouseY() + Game1.tileSize / 4)),
+                        Game1.getOldMouseX() + Game1.tileSize / 4,
+                        Game1.getOldMouseY() + Game1.tileSize / 4),
                     1f);
             }
 
