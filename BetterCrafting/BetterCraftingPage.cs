@@ -887,11 +887,15 @@ namespace BetterCrafting
 
             foreach (var c in currentPage.Keys)
             {
-                if (c.containsPoint(x, y)
-                    && c.hoverText.Equals(AVAILABLE)
-                    && currentPage[c].doesFarmerHaveIngredientsInInventory())
+                int num = Game1.oldKBState.IsKeyDown(Keys.LeftShift) ? 5 : 1;
+                for (int index = 0; index < num; ++index)
                 {
-                    this.clickCraftingRecipe(c, true);
+                    if (c.containsPoint(x, y)
+                        && c.hoverText.Equals(AVAILABLE)
+                        && currentPage[c].doesFarmerHaveIngredientsInInventory())
+                    {
+                        this.clickCraftingRecipe(c, index == 0 ? true : false);
+                    }
                 }
             }
 
