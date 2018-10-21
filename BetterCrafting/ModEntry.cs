@@ -38,7 +38,7 @@ namespace BetterCrafting
             {
                 var craftingTabNum = gameMenu.getTabNumberFromName("crafting");
                 var pages = this.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
-                pages[craftingTabNum] = new CraftingPage(this, this.categoryData, this.lastCategory);
+                pages[craftingTabNum] = new BetterCraftingPage(this, this.categoryData, this.lastCategory);
             }
             else
                 oldMenu = false;

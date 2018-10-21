@@ -13,7 +13,7 @@ using static BetterCrafting.CategoryManager;
 
 namespace BetterCrafting
 {
-    class CraftingPage : StardewValley.Menus.CraftingPage
+    class BetterCraftingPage : CraftingPage
     {
         private const int WIDTH = 800;
         private const string AVAILABLE = "a";
@@ -55,7 +55,7 @@ namespace BetterCrafting
         private int snappedId = 0;
         private int snappedSection = 1;
 
-        public CraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory)
+        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory)
             : base(Game1.activeClickableMenu.xPositionOnScreen, Game1.activeClickableMenu.yPositionOnScreen, Game1.activeClickableMenu.width, Game1.activeClickableMenu.height)
         {
             this.betterCrafting = betterCrafting;
