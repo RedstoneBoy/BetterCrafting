@@ -152,8 +152,6 @@ namespace BetterCrafting
                 Game1.mouseCursors,
                 new Rectangle(162, 440, 16, 16),
                 (float)Game1.pixelZoom, false);
-
-            this.UpdateInventory();
         }
 
         public void UpdateInventory()
@@ -998,6 +996,7 @@ namespace BetterCrafting
 
         public override void draw(SpriteBatch b)
         {
+            this.UpdateInventory();
             base.drawHorizontalPartition(b, this.yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + Game1.tileSize * 4);
 
             var currentPage = this.GetCurrentPage();
