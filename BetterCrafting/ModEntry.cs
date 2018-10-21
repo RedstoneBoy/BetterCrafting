@@ -14,7 +14,7 @@ namespace BetterCrafting
 {
     public class ModEntry : Mod
     {
-        private static bool oldMenu = false;
+        public static bool oldMenu = false;
         private CategoryData categoryData;
         public Nullable<ItemCategory> lastCategory;
 
@@ -42,11 +42,6 @@ namespace BetterCrafting
             }
             else
                 oldMenu = false;
-        }
-
-        public static void setOldMenu(bool oldMenuActive = false)
-        {
-            oldMenu = oldMenuActive;
         }
     }
 }

@@ -906,7 +906,7 @@ namespace BetterCrafting
                 Game1.playSound("select");
 
                 GameMenu gameMenu = (GameMenu)Game1.activeClickableMenu;
-                BetterCrafting.ModEntry.setOldMenu(true);
+                ModEntry.oldMenu = true;
                 Game1.activeClickableMenu = new GameMenu(gameMenu.currentTab);
                 return;
             }
