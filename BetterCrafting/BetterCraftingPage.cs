@@ -905,25 +905,20 @@ namespace BetterCrafting
                 return;
             }
 
-            if (this.trashCan.containsPoint(x, y) && this.heldItem != null && this.heldItem.canBeTrashed())
+            if (this.trashCan != null && this.trashCan.containsPoint(x, y) && (this.heldItem != null && this.heldItem.canBeTrashed()))
             {
                 if (this.heldItem is StardewValley.Object && Game1.player.specialItems.Contains((this.heldItem as StardewValley.Object).ParentSheetIndex))
-                {
                     Game1.player.specialItems.Remove((this.heldItem as StardewValley.Object).ParentSheetIndex);
-                }
-                this.heldItem = null;
+                this.heldItem = (Item)null;
                 Game1.playSound("trashcan");
-
-                return;
             }
-
-            if (this.heldItem != null && !this.isWithinBounds(x, y) && this.heldItem.canBeDropped())
+            else
             {
-                Game1.playSound("throwDownItem");
-                Game1.createItemDebris(this.heldItem, Game1.player.getStandingPosition(), Game1.player.facingDirection);
-                this.heldItem = null;
-
-                return;
+                if (this.heldItem == null || this.isWithinBounds(x, y) || !this.heldItem.canBeTrashed())
+                    return;
+                Game1.playSound("throwDownITem");
+                Game1.createItemDebris(this.heldItem, Game1.player.getStandingPosition(), Game1.player.FacingDirection, (GameLocation)null, -1);
+                this.heldItem = (Item)null;
             }
         }
 
