@@ -276,7 +276,7 @@ namespace BetterCrafting
         private Dictionary<ClickableTextureComponent, CraftingRecipe> GetCurrentPage()
         {
             var craftingPages = this.recipes[this.selectedCategory];
-            if (this.recipePage >= craftingPages.Count)
+            if (this.recipePage >= craftingPages.Count || this.recipePage < 0)
             {
                 this.recipePage = 0;
             }
@@ -762,7 +762,8 @@ namespace BetterCrafting
 
         public override void performHoverAction(int x, int y)
         {
-
+            this.hoverTitle = "";
+            this.hoverText = "";
             this.hoverRecipe = null;
             this.hoverItem = this.inventory.hover(x, y, this.hoverItem);
 
@@ -770,11 +771,6 @@ namespace BetterCrafting
             {
                 this.hoverTitle = this.inventory.hoverTitle;
                 this.hoverText = this.inventory.hoverText;
-            }
-            else
-            {
-                this.hoverTitle = "";
-                this.hoverText = "";
             }
 
             var currentPage = this.GetCurrentPage();
