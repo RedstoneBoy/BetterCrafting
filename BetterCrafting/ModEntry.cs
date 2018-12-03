@@ -19,7 +19,7 @@ namespace BetterCrafting
 
         public override void Entry(IModHelper helper)
         {
-            this.categoryData = this.Helper.ReadJsonFile<CategoryData>("categories.json");
+            this.categoryData = this.Helper.Data.ReadJsonFile<CategoryData>("categories.json");
             if (this.categoryData == null)
             {
                 this.Monitor.Log("Failed to read category data from 'categories.json'", LogLevel.Error);

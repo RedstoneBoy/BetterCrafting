@@ -11,7 +11,7 @@ namespace BetterCrafting
     {
         public static TValue GetFieldValue<TValue>(this IReflectionHelper reflection, object obj, string name, bool required = true)
         {
-            return reflection.GetPrivateField<TValue>(obj, name, required).GetValue();
+            return reflection.GetField<TValue>(obj, name, required).GetValue();
         }
     }
 }
